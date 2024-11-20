@@ -18,13 +18,21 @@ def set_Hamiltonian_S(m,Jz,Jxy,hx,D,position=0):
         Sz[i,i] = 0.5 * (m - 1.0) - i
     
     Sx = 0.5 * (Sp + Sm)
+    Sy = -0.5j * (Sp - Sm)
+    # print(f"sx:{Sx}")
+    # print(f"sy:{Sy}")
     Sz2 = np.dot(Sz,Sz)
 
     Id = np.identity(m)
-
+    # print(- 0.5 * hx * (np.kron(Id,Sx) + np.kron(Sx,Id)))
+    # print(-0.5* hx * (np.kron(Sx,Id)))
+    hy = (0.29 * hx)
+    print(Sy)
     if position == 0: ##center
-        return Jz * np.kron(Sz,Sz) + 0.5 * Jxy * (np.kron(Sp,Sm) + np.kron(Sm,Sp)) - 0.5 * hx * (np.kron(Id,Sx) + np.kron(Sx,Id)) + 0.5 * D * (np.kron(Id,Sz2) + np.kron(Sz2,Id))
-    elif position < 0: ## left boundary
+        H_1 = Jz * np.kron(Sz,Sz) + 0.5 * Jxy * (np.kron(Sp,Sm) + np.kron(Sm,Sp)) - 0.5 * hx * (np.kron(Id,Sx) + np.kron(Sx,Id)) - 0.5 * hy * (-np.kron(Id,Sy) +np.kron(Sy,Id))  + 0.5 * D * (np.kron(Id,Sz2) + np.kron(Sz2,Id))
+        # H_2 = Jz * np.kron(Sz,Sz) + 0.5 * Jxy * (np.kron(Sp,Sm) + np.kron(Sm,Sp)) - 0.5 * hx * (np.kron(Id,Sx) + np.kron(Sx,Id)) + 0.5 * hy * (np.kron(Id,Sy) + np.kron(Sy,Id))  + 0.5 * D * (np.kron(Id,Sz2) + np.kron(Sz2,Id))
+        print(H_1)
+        return H_1
         return Jz * np.kron(Sz,Sz) + 0.5 * Jxy * (np.kron(Sp,Sm) + np.kron(Sm,Sp)) - hx * (0.5 * np.kron(Id,Sx) + np.kron(Sx,Id)) + D * (0.5 * np.kron(Id,Sz2) + np.kron(Sz2,Id))
     else: ## right boundary
         return Jz * np.kron(Sz,Sz) + 0.5 * Jxy * (np.kron(Sp,Sm) + np.kron(Sm,Sp)) - hx * (np.kron(Id,Sx) + 0.5 * np.kron(Sx,Id)) + D * (np.kron(Id,Sz2) + 0.5 * np.kron(Sz2,Id))
@@ -73,6 +81,8 @@ def TEBD_update(Tn,lam,expH,chi_max,inv_precision=1e-10):
             ## Truncation
             ## smaller singular values are neglected. (So, actual chi varies depending on its bond)
             chi = np.min([np.sum(s > inv_precision),chi_max])
+            # print(f"s= {np.diag(s)}")
+            # print(f"chi = {chi}")
             lam[i+1] = s[:chi]/np.sqrt(np.sum(s[:chi]**2))
 
             Tn[i] = np.tensordot(np.diag(lam_inv[i]),U[:,:chi].reshape(chi_l,m,chi),(1,0)).transpose(1,0,2)
@@ -201,15 +211,18 @@ def Contract_correlation(Env_left,Env_right,Tn,lam,op1,op2,max_distance,step=1):
 def Calc_mag(Env_left,Env_right,Tn,lam):
 
     N = len(Tn)
+    # print(N)
     m = Tn[0].shape[0]
     Sz = np.zeros((m,m))
     for i in range(m):
         Sz[i,i] = 0.5 * (m - 1.0) - i    
+    print(f"sz]{Sz}")
+    # print(Contract_one_site_no_op(Env_left[i],Env_right[i],Tn[i],lam[i]))
     
     mz = np.zeros(N)
     for i in range(N):
         mz[i]=np.real(Contract_one_site(Env_left[i],Env_right[i],Tn[i],lam[i],Sz)/Contract_one_site_no_op(Env_left[i],Env_right[i],Tn[i],lam[i]))
-        
+    # print(f"mz:{mz}")
     return mz
 
 def Calc_dot(Env_left,Env_right,Tn,lam,Sz,Sp,Sm):
@@ -341,7 +354,7 @@ def TEBD_Simulation(m,Jz,Jxy,hx,D,N,chi_max,tau_max,tau_min,tau_step,inv_precisi
         Env_left,Env_right = Calc_Environment(Tn,lam)        
         mz = Calc_mag(Env_left,Env_right,Tn,lam)    
         E = Calc_Energy(Env_left,Env_right,Tn,lam,Jz,Jxy,hx,D)
-        print(repr(m)+" " +repr(Jz) + " " + repr(Jxy)+ " "+repr(hx) + " " + repr(D) + " " +repr(E) + " " + repr(np.sqrt(np.sum(mz**2)/N)))
+        print(repr(m)+" " +repr(Jz) + " " + repr(Jxy)+ " "+repr(hx) + " " + repr(D) + " " +repr(E) + " " + repr(mz[0]-mz[1]))
 
     if output_dyn:
         return Tn,lam,np.array(T_list),np.array(E_list),np.array(mz_list)

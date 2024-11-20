@@ -37,8 +37,11 @@ class Hamiltonian:
         
         Id = np.identity(m)
         Sx = 0.5 * (Sp + Sm)
+        Sy = 0.5 * -1j *(Sp-Sm)
         Sz2 = np.dot(Sz,Sz)
-
+        print(f"Sx {Sx}")
+        print(f"Sy {Sy}")
+        print(f"Sz {Sz}")
 
         if self.periodic:
             self.pair_operator = (Jz * np.kron(Sz,Sz) + 0.5 * Jxy * (np.kron(Sp,Sm) +np.kron(Sm,Sp))
@@ -63,13 +66,20 @@ class Hamiltonian:
     def mult_Hamiltonian(self,v):
         x = np.zeros(self.v_shape)
         vr = v.reshape(self.v_shape)
+        print(f"size: {self.v_shape}")
+        # print(f"vr : {vr}")
+        # print("------")
         
         for i in range(self.N - 1):
             x += np.tensordot(vr,self.pair_operator,axes=([i,i+1],[2,3])).transpose(self.pair_transpose_list[i])
-        x += np.tensordot(vr,self.periodic_pair_operator,axes=([self.N-1,0],[2,3])).transpose(self.pair_transpose_list[self.N-1])                     
+        x += np.tensordot(vr,self.periodic_pair_operator,axes=([self.N-1,0],[2,3])).transpose(self.pair_transpose_list[self.N-1])  
+        # if (i == self.N-2):
+        #     print(f"ham : {x.reshape(self.m**self.N)}")                   
         return x.reshape(self.m**self.N)
            
-def Calc_GS(m,Jz,Jxy,hx,D,N,k=5,periodic=False):
+def Calc_GS(m,Jz,Jxy,hx,D,N,k,periodic=False):
+    
+    print(f"periodic {periodic}")
     hamiltonian = Hamiltonian(m,Jz,Jxy,hx,D,N,periodic)
     Ham = spr_linalg.LinearOperator((m**N,m**N),hamiltonian.mult_Hamiltonian,dtype=float)
     eig_val,eig_vec = spr_linalg.eigsh(Ham,k=k,which="SA")
@@ -107,5 +117,16 @@ if __name__ == "__main__":
     print("S=1 N-site open Heisenberg chain")
     print("N = "+ repr(N))
     print("Ground state energy per bond = "+ repr(eig_val[0]/(N-1)))
-    for i in range(1,args.e_num):
-        print("Excited states " +repr(i) +":  " + repr(eig_val[i]/(N-1)))
+    print("Ground state energy per bond = "+ repr(eig_vec[0]))
+    with open("energy.txt", "w") as f:
+        for i in range(0,args.e_num):
+            print("Excited states " +repr(i) +":  " + repr(eig_val[i]/(N-1)))
+            f.write(str(eig_val[i]/(N-1)) + "\n")
+
+    with open("vector.txt", "w") as f:
+            for i in range(0,args.e_num):
+                print("Excited states " +repr(i) +":  " + repr(eig_vec[i]))
+                f.write(str(eig_vec[i]) + "\n")
+            
+        
+

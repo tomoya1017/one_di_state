@@ -5,6 +5,7 @@ import copy
 import MPS
 import matplotlib 
 import matplotlib.pyplot as plt
+import ED
 
 
 ## Set parameters
@@ -13,7 +14,7 @@ m = 2 ## vector size m: total dimension is m^N
 chi_max = 20 ## maximum bond dimension at truncation
 seed = None ## The seed for random numnber generator. 
 
-class model_cal():
+class basic_MPS():
     def __init__(self,N,m,chi_max,seed):
         self.N = N
         self.m = m
@@ -47,7 +48,7 @@ class model_cal():
 
 
     ## Main calculation
-    def make_vector(self):
+    def make_random_vector(self):
         if seed != None:
             np.random.seed(seed)
                 
@@ -56,12 +57,12 @@ class model_cal():
         print("Random seed: = "+repr(self.seed))
 
         ## create random vecgtor
-        eig_vec = ((np.random.rand(self.m**self.N)-0.5) + 1.0j * (np.random.rand(self.m**self.N)-0.5)).reshape(self.m**self.N)
+        random_eig_vec = ((np.random.rand(self.m**self.N)-0.5) + 1.0j * (np.random.rand(self.m**self.N)-0.5)).reshape(self.m**self.N)
         ## normalization
-        norm = np.tensordot(eig_vec,eig_vec.conj(),axes=(0,0))
-        eig_vec /= np.sqrt(np.abs(norm))
+        norm = np.tensordot(random_eig_vec,random_eig_vec.conj(),axes=(0,0))
+        random_eig_vec /= np.sqrt(np.abs(norm))
 
-        return eig_vec
+        return random_eig_vec
 
 
     ## Make exact MPS (from "left")
@@ -103,7 +104,7 @@ class model_cal():
             Tn_ex[i]=Tn_ex[i][:,:,:chi]
             Tn_ex[i+1]=Tn_ex[i+1][:,:chi,:]
 
-        print("Truncation: chi_max = "+repr(chi_max))
+        print("Truncation: chi_max = "+repr(self.chi_max))
         Tn = Tn_ex
         lam = lam_ex
         
@@ -114,7 +115,7 @@ class model_cal():
     def plot_schmidt_coefficient_at_half(self,lam_ex):
         plt.title("Schmidt coefficients for "+"(N, m) = ("+repr(self.N)+", "+repr(self.m)+") random vector")
         plt.plot(np.arange(len(lam_ex[self.N//2]))+1,lam_ex[self.N//2]**2,"o",label="Schmidt coefficients")
-        plt.axvline([chi_max],0,1,  c="red", linestyle='dashed', label="chi_max") ## position of chi_max
+        plt.axvline([self.chi_max],0,1,  c="red", linestyle='dashed', label="chi_max") ## position of chi_max
         plt.xlabel("index")
         plt.xscale("log")
         plt.ylabel("Schmidt coefficients")
@@ -132,7 +133,7 @@ class model_cal():
         return distance
     
     # chiの違いでどのくらいdistanceが変わるのかを図示
-    def compare_chi(self,min_chi_max,max_chi_max,d_chi_max,Tn_ex,lam_ex):
+    def compare_distance(self,min_chi_max,max_chi_max,d_chi_max,Tn_ex,lam_ex):
         chi_max_list = np.arange(min_chi_max, max_chi_max+1, d_chi_max, dtype=int)
         chi_list = np.ones((self.N+1,),dtype=int)
         vec_ex = MPS.remake_vec(Tn_ex,lam_ex)
@@ -159,10 +160,15 @@ class model_cal():
         plt.show()
 
     
-calc = model_cal(N,m,chi_max,seed)
-eig_vec = calc.make_vector()
-Tn_ex, lam_ex = calc.make_MPS_left(eig_vec)
-Tn_ex1, lam_ex1,Tn, lam = calc.truncation(Tn_ex, lam_ex)
-calc.plot_schmidt_coefficient_at_half(lam_ex)
-distacne = calc.distance(Tn_ex, lam_ex, Tn, lam)
-calc.compare_chi(10,260,10,Tn_ex,lam_ex)
+
+
+
+
+    
+# calc = basic_MPS(N,m,chi_max,seed)
+# random_eig_vec = calc.make_random_vector()
+# Tn_ex, lam_ex = calc.make_MPS_left(random_eig_vec)
+# Tn_ex1, lam_ex1,Tn, lam = calc.truncation(Tn_ex, lam_ex)
+# calc.plot_schmidt_coefficient_at_half(lam_ex)
+# distacne = calc.distance(Tn_ex, lam_ex, Tn, lam)
+# calc.compare_chi(10,260,10,Tn_ex,lam_ex)
