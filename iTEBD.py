@@ -68,6 +68,7 @@ def iTEBD_update(Tn,lam,expH_1,chi_max,inv_precision=1e-10):
             lam[(i+1)%period] = s[:chi]/np.sqrt(np.sum(s[:chi]**2))
 
             Tn[i] = np.tensordot(np.diag(lam_inv[i]),U[:,:chi].reshape(chi_l,m,chi),(1,0)).transpose(1,0,2)
+            # print(Tn[i])
             Tn[(i+1)%period] = np.tensordot(VT[:chi,:].reshape(chi,chi_r,m),np.diag(lam_inv[(i+2)%period]),(1,0)).transpose(1,0,2)
 
             lam_inv[(i+1)%period] = 1.0/lam[(i+1)%period]
@@ -324,6 +325,7 @@ def Calc_Energy_infinite(Env_left,Env_right,Tn,lam,Jz,Jxy,hx,D):
     my = np.zeros(period)
     z2 = np.zeros(period)
     hy = 0.29 * hx
+    delta = 2.1
 
     for i in range(period):
         norm = TEBD.Contract_one_site_no_op(Env_left[i],Env_right[i],Tn[i],lam[i])
@@ -337,7 +339,7 @@ def Calc_Energy_infinite(Env_left,Env_right,Tn,lam,Jz,Jxy,hx,D):
         pm[i] = np.real(TEBD.Contract_two_site(Env_left[i],Env_right[(i+1)%period],Tn[i],Tn[(i+1)%period],lam[i],lam[(i+1)%period],Sp,Sm)/norm)
         mp[i] =np.real(TEBD.Contract_two_site(Env_left[i],Env_right[(i+1)%period],Tn[i],Tn[(i+1)%period],lam[i],lam[(i+1)%period],Sm,Sp)/norm)
 
-    E = (Jz * np.sum(zz) + 0.5 * Jxy * (np.sum(pm) + np.sum(mp)) -hx * np.sum(mx) -hy * np.sum(my) + D * np.sum(z2)) / period
+    E = (Jz  * np.sum(zz) + 0.5 * Jxy * (np.sum(pm) + np.sum(mp)) -hx * np.sum(mx) -hy * np.sum(my) + D * np.sum(z2)) / period
     return E
 
 def iTEBD_Simulation(m,Jz,Jxy,hx,D,chi_max,tau_max,tau_min,tau_step,inv_precision=1e-10,second_ST=False,tensor_dtype=np.dtype(float),output_dyn=True,output_dyn_num=100,output=True):
@@ -380,7 +382,7 @@ def iTEBD_Simulation(m,Jz,Jxy,hx,D,chi_max,tau_max,tau_min,tau_step,inv_precisio
             
             mz = Calc_mag_infinite(Env_left,Env_right,Tn,lam)
             E = Calc_Energy_infinite(Env_left,Env_right,Tn,lam,Jz,Jxy,hx,D)
-            # print("##Dyn "+repr(T) + " " +repr(E) + " " + repr(np.sqrt(np.sum(mz**2)/period)) + " " + repr(mz))
+            print("##Dyn "+repr(T) + " " +repr(E) + " " + repr(np.sqrt(np.sum(mz**2)/period)) + " " + repr(mz))
             T_list.append(T)
             E_list.append(E)
             mz_list.append(mz)

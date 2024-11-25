@@ -19,19 +19,21 @@ def set_Hamiltonian_S(m,Jz,Jxy,hx,D,position=0):
     
     Sx = 0.5 * (Sp + Sm)
     Sy = -0.5j * (Sp - Sm)
-    # print(f"sx:{Sx}")
-    # print(f"sy:{Sy}")
+    print(f"sx:{Sx}")
+    print(f"sy:{Sy}")
     Sz2 = np.dot(Sz,Sz)
 
     Id = np.identity(m)
     # print(- 0.5 * hx * (np.kron(Id,Sx) + np.kron(Sx,Id)))
     # print(-0.5* hx * (np.kron(Sx,Id)))
     hy = (0.29 * hx)
-    print(Sy)
+    delta = 2.1
+    # print(Sy)
     if position == 0: ##center
-        H_1 = Jz * np.kron(Sz,Sz) + 0.5 * Jxy * (np.kron(Sp,Sm) + np.kron(Sm,Sp)) - 0.5 * hx * (np.kron(Id,Sx) + np.kron(Sx,Id)) - 0.5 * hy * (-np.kron(Id,Sy) +np.kron(Sy,Id))  + 0.5 * D * (np.kron(Id,Sz2) + np.kron(Sz2,Id))
+        H_1 = Jz  * np.kron(Sz,Sz) + 0.5 * Jxy * (np.kron(Sp,Sm) + np.kron(Sm,Sp)) - 0.5 * hx * (np.kron(Id,Sx) + np.kron(Sx,Id)) - 0.5 * hy  * (-np.kron(Id,Sy) +np.kron(Sy,Id))
         # H_2 = Jz * np.kron(Sz,Sz) + 0.5 * Jxy * (np.kron(Sp,Sm) + np.kron(Sm,Sp)) - 0.5 * hx * (np.kron(Id,Sx) + np.kron(Sx,Id)) + 0.5 * hy * (np.kron(Id,Sy) + np.kron(Sy,Id))  + 0.5 * D * (np.kron(Id,Sz2) + np.kron(Sz2,Id))
-        print(H_1)
+        # print(H_1)
+        # return Jz * np.kron(Sz,Sz) + 0.5 * Jxy * (np.kron(Sp,Sm) + np.kron(Sm,Sp)) - 0.5 * hx * (np.kron(Id,Sx) + np.kron(Sx,Id)) + 0.5 * D * (np.kron(Id,Sz2) + np.kron(Sz2,Id))
         return H_1
         return Jz * np.kron(Sz,Sz) + 0.5 * Jxy * (np.kron(Sp,Sm) + np.kron(Sm,Sp)) - hx * (0.5 * np.kron(Id,Sx) + np.kron(Sx,Id)) + D * (0.5 * np.kron(Id,Sz2) + np.kron(Sz2,Id))
     else: ## right boundary
@@ -211,17 +213,19 @@ def Contract_correlation(Env_left,Env_right,Tn,lam,op1,op2,max_distance,step=1):
 def Calc_mag(Env_left,Env_right,Tn,lam):
 
     N = len(Tn)
-    # print(N)
+    # print(f"Tn: {N}")
     m = Tn[0].shape[0]
     Sz = np.zeros((m,m))
     for i in range(m):
         Sz[i,i] = 0.5 * (m - 1.0) - i    
-    print(f"sz]{Sz}")
+    # print(f"sz]{Sz}")
     # print(Contract_one_site_no_op(Env_left[i],Env_right[i],Tn[i],lam[i]))
     
     mz = np.zeros(N)
     for i in range(N):
         mz[i]=np.real(Contract_one_site(Env_left[i],Env_right[i],Tn[i],lam[i],Sz)/Contract_one_site_no_op(Env_left[i],Env_right[i],Tn[i],lam[i]))
+        # mz[i]=(Contract_one_site(Env_left[i],Env_right[i],Tn[i],lam[i],Sz)/Contract_one_site_no_op(Env_left[i],Env_right[i],Tn[i],lam[i]))
+
     # print(f"mz:{mz}")
     return mz
 
