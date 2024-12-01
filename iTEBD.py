@@ -34,30 +34,31 @@ def iTEBD_update(Tn,lam,expH_1,chi_max,inv_precision=1e-10):
             ## apply expH
             chi_l = Tn[i].shape[1]
             chi_r = Tn[(i+1)%period].shape[2]
-            # if (i==0):
-            Theta = np.tensordot(
-                np.tensordot(
+            if (i==0):
+                Theta = np.tensordot(
                     np.tensordot(
                         np.tensordot(
                             np.tensordot(
-                                np.diag(lam[i]),Tn[i],(1,1))
-                            ,np.diag(lam[(i+1)%period]),(2,0))
-                        ,Tn[(i+1)%period],(2,1))
-                    ,np.diag(lam[(i+2)%period]),(3,0))
-                ,expH_1,([1,2],[2,3])
-            ).transpose(0,2,1,3).reshape(chi_l*m,chi_r*m)
-            # else:
-            #     Theta = np.tensordot(
-            #         np.tensordot(
-            #             np.tensordot(
-            #                 np.tensordot(
-            #                     np.tensordot(
-            #                         np.diag(lam[i]),Tn[i],(1,1))
-            #                     ,np.diag(lam[(i+1)%period]),(2,0))
-            #                 ,Tn[(i+1)%period],(2,1))
-            #             ,np.diag(lam[(i+2)%period]),(3,0))
-            #         ,expH_2,([1,2],[2,3])
-            #     ).transpose(0,2,1,3).reshape(chi_l*m,chi_r*m)
+                                np.tensordot(
+                                    np.diag(lam[i]),Tn[i],(1,1))
+                                ,np.diag(lam[(i+1)%period]),(2,0))
+                            ,Tn[(i+1)%period],(2,1))
+                        ,np.diag(lam[(i+2)%period]),(3,0))
+                    ,expH_1,([1,2],[2,3])
+                ).transpose(0,2,1,3).reshape(chi_l*m,chi_r*m)
+            else:
+                expH_1 = expH_1.transpose(1,0,3,2)
+                Theta = np.tensordot(
+                    np.tensordot(
+                        np.tensordot(
+                            np.tensordot(
+                                np.tensordot(
+                                    np.diag(lam[i]),Tn[i],(1,1))
+                                ,np.diag(lam[(i+1)%period]),(2,0))
+                            ,Tn[(i+1)%period],(2,1))
+                        ,np.diag(lam[(i+2)%period]),(3,0))
+                    ,expH_1,([1,2],[2,3])
+                ).transpose(0,2,1,3).reshape(chi_l*m,chi_r*m)
             ## SVD
             U,s,VT = linalg.svd(Theta,full_matrices=False)
 
@@ -342,6 +343,25 @@ def Calc_Energy_infinite(Env_left,Env_right,Tn,lam,Jz,Jxy,hx,D):
     E = (Jz  * np.sum(zz) + 0.5 * Jxy * (np.sum(pm) + np.sum(mp)) -hx * np.sum(mx) -hy * np.sum(my) + D * np.sum(z2)) / period
     return E
 
+def Calc_norm(Tn,lam):
+    period = len(Tn)
+    chi = Tn[0][1].size
+    print(chi)
+    norm_list =[]
+    lam_inv =[]
+    for i in range(period):
+        lam_inv.append(1.0/lam[i])
+    # print(len(lam_inv))
+
+    for i in range(period):
+        upper = np.tensordot(np.tensordot(np.diag(lam_inv[(i+1)%period]),Tn[i],[1,1]),np.diag(lam[i]),[2,0]).transpose(1,0,2)
+        lower = upper.conj()
+        norm_list.append(np.tensordot(upper,lower,[0,0]).reshape(chi,chi))
+        
+    return norm_list
+
+
+
 def iTEBD_Simulation(m,Jz,Jxy,hx,D,chi_max,tau_max,tau_min,tau_step,inv_precision=1e-10,second_ST=False,tensor_dtype=np.dtype(float),output_dyn=True,output_dyn_num=100,output=True):
     tau_factor = (tau_min/tau_max)**(1.0/tau_step)
     output_step = tau_step/output_dyn_num
@@ -382,7 +402,7 @@ def iTEBD_Simulation(m,Jz,Jxy,hx,D,chi_max,tau_max,tau_min,tau_step,inv_precisio
             
             mz = Calc_mag_infinite(Env_left,Env_right,Tn,lam)
             E = Calc_Energy_infinite(Env_left,Env_right,Tn,lam,Jz,Jxy,hx,D)
-            print("##Dyn "+repr(T) + " " +repr(E) + " " + repr(np.sqrt(np.sum(mz**2)/period)) + " " + repr(mz))
+            # print("##Dyn "+repr(T) + " " +repr(E) + " " + repr(np.sqrt(np.sum(mz**2)/period)) + " " + repr(mz))
             T_list.append(T)
             E_list.append(E)
             mz_list.append(mz)
@@ -398,11 +418,15 @@ def iTEBD_Simulation(m,Jz,Jxy,hx,D,chi_max,tau_max,tau_min,tau_step,inv_precisio
 
 
     if output:
-        Env_left,Env_right = Calc_Environment_infinite(Tn,lam,canonical=True)
+        Env_left,Env_right = Calc_Environment_infinite(Tn,lam)
         mz = Calc_mag_infinite(Env_left,Env_right,Tn,lam)
         E = Calc_Energy_infinite(Env_left,Env_right,Tn,lam,Jz,Jxy,hx,D)
+        norm = Calc_norm(Tn,lam)
 
         print(repr(m)+" " + repr(Jz) + " "+ repr(Jxy)+ " "+repr(hx)+ " "+repr(D)+ " "+repr(E) + " "+repr(np.sqrt(np.sum(mz**2)/period)))
+        print(norm[0])
+        print("=================")
+        print(norm[1])
         # print(E + "\t" + np.sqrt(np.sum(mz**2)/period))
 
     if output_dyn:

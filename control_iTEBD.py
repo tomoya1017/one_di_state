@@ -38,8 +38,8 @@ if __name__ == "__main__":
     D = 0.0
     chi_max = 10
     tau_max = 0.1
-    tau_min = 0.001
-    tau_step = 2000
+    tau_min = 0.0001
+    tau_step = 20000
     inv_precision = 1e-10
     use_complex = True
     second_ST = False
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     output_dyn_num = 100
 
     # hx を 0 から 5 まで 0.1 刻みで変化させる
-    hx_values = np.arange(0, 5.1, 0.1)
+    hx_values = np.arange(0, 1.1, 0.05)
     results = []
 
     for hx in hx_values:
@@ -60,5 +60,5 @@ if __name__ == "__main__":
     for hx, result in results:
         print(f"hx={hx:.1f} -> {result}")
         final_result[hx] = result
-    with open("results_iTEBD_chi10_without_sy.json", "w") as json_file:
+    with open("results_iTEBD_chi10_new.json", "w") as json_file:
         json.dump(final_result, json_file, indent=4)  # 見やすくインデントを追加

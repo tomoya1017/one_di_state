@@ -4,7 +4,7 @@ import seaborn as sns
 import json
 import numpy as np
 
-with open("results_iTEBD_chi70.json", 'r', encoding='utf-8') as file:
+with open("results_iTEBD_chi10_new.json", 'r', encoding='utf-8') as file:
     # JSONを辞書としてロード
     data = json.load(file)
 
@@ -20,14 +20,15 @@ for key, value in data.items():
 #     print(value)
 print(last_value)
 # print(file)
-magnetic_field = []
-for i in range(51):
-    magnetic_field.append(i/10)
+magnetic_field = np.arange(0,1.1,0.05)
+# for i in range(22):
+#     magnetic_field.append(i/10)
 
 
 plt.plot(magnetic_field,last_values, marker="o", linestyle="dashed")
 plt.xlabel("B")
-plt.ylabel("|S^z|^2")
+plt.ylabel("|S^z|")
+# plt.xticks( np.arange(0, 2, 0.3))
 plt.legend()
-plt.savefig("S^z_itebd_chi70.png")
+plt.savefig("S^z_itebd_chi10_new.png")
 plt.show()

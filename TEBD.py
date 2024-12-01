@@ -19,8 +19,8 @@ def set_Hamiltonian_S(m,Jz,Jxy,hx,D,position=0):
     
     Sx = 0.5 * (Sp + Sm)
     Sy = -0.5j * (Sp - Sm)
-    print(f"sx:{Sx}")
-    print(f"sy:{Sy}")
+    # print(f"sx:{Sx}")
+    # print(f"sy:{Sy}")
     Sz2 = np.dot(Sz,Sz)
 
     Id = np.identity(m)
